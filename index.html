@@ -537,7 +537,8 @@ body{display:flex;justify-content:center;padding:0}
 </style>
 </head>
 <body>
-<audio id="bgm" loop preload="auto" src="bgm.mp3"></audio>
+<audio id="bgm-game" loop preload="auto" src="bgm.mp3"></audio>
+<audio id="bgm-title" loop preload="auto" src="bgm-title.mp3"></audio>
 <button class="mute-btn" id="mute-btn" onclick="toggleMute()" aria-label="音量切替">♪</button>
 <div id="game">
 
@@ -789,13 +790,17 @@ function sfxResult() {
 }
 
 // ===== BGM制御 =====
-var bgmEl = null;
+var bgmGame = null;
+var bgmTitle = null;
+var bgmCurrent = null; // 現在再生中のaudio要素
 var bgmMuted = false;
 var bgmStarted = false;
 
 function initBgm() {
-  bgmEl = document.getElementById('bgm');
-  bgmEl.volume = 0.25;
+  bgmGame = document.getElementById('bgm-game');
+  bgmTitle = document.getElementById('bgm-title');
+  bgmGame.volume = 0.25;
+  bgmTitle.volume = 0.25;
   try {
     if (localStorage.getItem('frutti_muted') === '1') {
       bgmMuted = true;
@@ -804,22 +809,46 @@ function initBgm() {
   } catch(e) {}
 }
 
+// どのBGMを使うか決める（タイトル画面ならtitle、それ以外はgame）
+function getBgmForScene() {
+  var titleActive = document.getElementById('s-title').classList.contains('active');
+  return titleActive ? bgmTitle : bgmGame;
+}
+
+// BGMを切り替える（クロスフェードはせずシンプルに切替）
+function switchBgm() {
+  if (bgmMuted) return;
+  var target = getBgmForScene();
+  if (bgmCurrent === target) return; // 同じなら何もしない
+
+  // 現在再生中のものを停止
+  if (bgmCurrent) {
+    bgmCurrent.pause();
+    bgmCurrent.currentTime = 0;
+  }
+
+  bgmCurrent = target;
+  bgmCurrent.play().catch(function() {});
+}
+
 function startBgm() {
-  if (!bgmEl || bgmStarted || bgmMuted) return;
-  bgmEl.play().then(function() {
+  if (bgmStarted || bgmMuted) return;
+  var target = getBgmForScene();
+  target.play().then(function() {
+    bgmCurrent = target;
     bgmStarted = true;
-  }).catch(function(e) {});
+  }).catch(function() {});
 }
 
 function toggleMute() {
   bgmMuted = !bgmMuted;
-  if (bgmEl) {
-    if (bgmMuted) {
-      bgmEl.pause();
-    } else {
-      bgmEl.play().catch(function(){});
-      bgmStarted = true;
-    }
+  if (bgmMuted) {
+    if (bgmCurrent) bgmCurrent.pause();
+  } else {
+    var target = getBgmForScene();
+    target.play().catch(function() {});
+    bgmCurrent = target;
+    bgmStarted = true;
   }
   document.getElementById('mute-btn').textContent = bgmMuted ? '♪̸' : '♪';
   try { localStorage.setItem('frutti_muted', bgmMuted ? '1' : '0'); } catch(e) {}
@@ -1111,7 +1140,11 @@ function stopTitleLidSound() {
 function showS(id) {
   var scenes = document.querySelectorAll('.scene');
   for (var i = 0; i < scenes.length; i++) scenes[i].classList.remove('active');
-  setTimeout(function() { document.getElementById('s-' + id).classList.add('active'); }, 50);
+  setTimeout(function() {
+    document.getElementById('s-' + id).classList.add('active');
+    // シーン切替後にBGMを切り替える
+    switchBgm();
+  }, 50);
   // タイトル以外に行くときは蓋音を止める、タイトルに戻るときは再開
   if (id === 'title') {
     stopTitleLidSound();
