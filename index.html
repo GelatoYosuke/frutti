@@ -539,6 +539,7 @@ body{display:flex;justify-content:center;padding:0}
 <body>
 <audio id="bgm-game" loop preload="auto" src="bgm.mp3"></audio>
 <audio id="bgm-title" loop preload="auto" src="bgm-title.mp3"></audio>
+<audio id="bgm-zukan" loop preload="auto" src="bgm-zukan.mp3"></audio>
 <button class="mute-btn" id="mute-btn" onclick="toggleMute()" aria-label="音量切替">♪</button>
 <div id="game">
 
@@ -792,6 +793,7 @@ function sfxResult() {
 // ===== BGM制御 =====
 var bgmGame = null;
 var bgmTitle = null;
+var bgmZukan = null;
 var bgmCurrent = null; // 現在再生中のaudio要素
 var bgmMuted = false;
 var bgmStarted = false;
@@ -799,8 +801,10 @@ var bgmStarted = false;
 function initBgm() {
   bgmGame = document.getElementById('bgm-game');
   bgmTitle = document.getElementById('bgm-title');
+  bgmZukan = document.getElementById('bgm-zukan');
   bgmGame.volume = 0.25;
   bgmTitle.volume = 0.25;
+  bgmZukan.volume = 0.25;
   try {
     if (localStorage.getItem('frutti_muted') === '1') {
       bgmMuted = true;
@@ -809,10 +813,12 @@ function initBgm() {
   } catch(e) {}
 }
 
-// どのBGMを使うか決める（タイトル画面ならtitle、それ以外はgame）
+// どのBGMを使うか決める
 function getBgmForScene() {
-  var titleActive = document.getElementById('s-title').classList.contains('active');
-  return titleActive ? bgmTitle : bgmGame;
+  if (document.getElementById('s-title').classList.contains('active')) return bgmTitle;
+  if (document.getElementById('s-zukan').classList.contains('active')) return bgmZukan;
+  if (document.getElementById('s-calendar').classList.contains('active')) return bgmZukan;
+  return bgmGame;
 }
 
 // BGMを切り替える（クロスフェードはせずシンプルに切替）
