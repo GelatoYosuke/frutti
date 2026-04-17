@@ -1063,7 +1063,9 @@ function updateTitleStats() {
   var curMonth = new Date().getMonth() + 1;
 
   // 旬ボタンのテキスト
-  var seasonPool = GD.filter(function(d) { return d.m === curMonth; });
+  var seasonPool = GD.filter(function(d) {
+    return getSeasonMonths(d).indexOf(curMonth) !== -1;
+  });
   var seasonBtn = document.getElementById('season-btn');
   seasonBtn.textContent = getMonthEmoji(curMonth) + ' ' + curMonth + '月の旬で遊ぶ（' + seasonPool.length + '品種）';
 
@@ -1076,7 +1078,9 @@ function updateTitleStats() {
     if (count > 0) {
       document.getElementById('title-nav').style.display = 'flex';
       document.getElementById('title-zukan-count').textContent = count + ' / ' + GD.length + ' 品種';
-      var inSeason = GD.filter(function(d) { return SAVE.collected[d.n] && d.m === curMonth; }).length;
+      var inSeason = GD.filter(function(d) {
+        return SAVE.collected[d.n] && getSeasonMonths(d).indexOf(curMonth) !== -1;
+      }).length;
       document.getElementById('title-cal-count').textContent = curMonth + '月の旬：' + inSeason + '品種';
     }
   }
@@ -1191,17 +1195,20 @@ function showCalendar() {
   document.getElementById('cal-count').textContent =
     collectedItems.length + ' / ' + GD.length + ' 品種';
 
-  // 現在の月の旬を先に計算
-  var nowInSeason = collectedItems.filter(function(d) { return d.m === currentMonth; }).length;
+  // 現在の月の旬を先に計算（複数月対応）
+  var nowInSeason = collectedItems.filter(function(d) {
+    return getSeasonMonths(d).indexOf(currentMonth) !== -1;
+  }).length;
   document.getElementById('cal-sub').innerHTML =
     '今は<strong style="color:var(--gold)">' + currentMonth + '月</strong>。'
     + (nowInSeason > 0 ? '今月が旬の出会った品種：' + nowInSeason + '種' : 'まだこの月に出会った品種はない');
 
-  // 月ごとにグループ化
+  // 月ごとにグループ化（複数月にまたがる品種は各月に表示）
   var byMonth = {};
   for (var m = 1; m <= 12; m++) byMonth[m] = [];
   collectedItems.forEach(function(d) {
-    byMonth[d.m].push(d);
+    var months = getSeasonMonths(d);
+    months.forEach(function(m) { byMonth[m].push(d); });
   });
 
   // 月ごとにソート（旬の時期の文字列で並べる：上旬→中旬→下旬）
@@ -1423,7 +1430,9 @@ function startGame(mode) {
 
   // 旬モード：今月が旬の品種だけでフィルター
   if (mode === 'season') {
-    pool = GD.filter(function(d) { return d.m === curMonth; });
+    pool = GD.filter(function(d) {
+      return getSeasonMonths(d).indexOf(curMonth) !== -1;
+    });
     qCount = Math.min(5, pool.length);
     if (qCount === 0) { alert('今月の旬の品種がありません'); return; }
   }
@@ -1600,16 +1609,60 @@ function showSeason(it) {
   hb.textContent = 'なかの子にきく（-30pt）';
 }
 
+// 品種の旬として正解扱いする月のリストを取得
+// 例: m=7, p="下旬〜8月上旬" → [7, 8]
+// 例: m=1, p="中旬〜3月下旬" → [1, 2, 3]（間の2月も含める）
+// 例: m=12, p="下旬〜3月" → [12, 1, 2, 3]（年またぎも対応）
+function getSeasonMonths(item) {
+  var p = item.p || '';
+  var startMonth = item.m;
+
+  // p内の最後の「○月」を終了月とみなす
+  var endMonth = startMonth;
+  var re = /(\d+)月/g;
+  var match, lastFound = null;
+  while ((match = re.exec(p)) !== null) {
+    var m = parseInt(match[1], 10);
+    if (m >= 1 && m <= 12) lastFound = m;
+  }
+  if (lastFound !== null) endMonth = lastFound;
+
+  // 開始月から終了月までを順に列挙（年またぎ対応）
+  var months = [];
+  var cur = startMonth;
+  var safety = 0; // 無限ループ防止
+  while (safety < 14) {
+    months.push(cur);
+    if (cur === endMonth) break;
+    cur = cur === 12 ? 1 : cur + 1;
+    safety++;
+  }
+  return months;
+}
+
 function ansSea(btn, sel, it) {
   var bs = document.querySelectorAll('#mg .m-btn');
   for (var i = 0; i < bs.length; i++) bs[i].classList.add('dis');
 
   var cor = it.m;
-  var diff = Math.abs(sel - cor);
-  var cd = Math.min(diff, 12 - diff);
+  var validMonths = getSeasonMonths(it);
+
+  // 正解：いずれかの旬の月
+  var isCorrect = validMonths.indexOf(sel) !== -1;
+
+  // 惜しい：いずれかの旬月から±1ヶ月以内（12月↔1月のラップも考慮）
+  var isClose = false;
+  if (!isCorrect) {
+    for (var i = 0; i < validMonths.length; i++) {
+      var diff = Math.abs(sel - validMonths[i]);
+      var cd = Math.min(diff, 12 - diff);
+      if (cd <= 1) { isClose = true; break; }
+    }
+  }
+
   var pts = 0, rt = 'wrong';
 
-  if (sel === cor) {
+  if (isCorrect) {
     btn.classList.add('correct');
     sfxCorrect();
     pts = it.d * 100 - (S.hSea ? 30 : 0);
@@ -1621,14 +1674,20 @@ function ansSea(btn, sel, it) {
       '<span class="dot">……</span>そうだ。' + it.p + 'だ',
       '<span class="dot">……</span>正解。' + cor + '月の' + it.p
     ]);
-  } else if (cd <= 1) {
+    // 正解の月を全てハイライト
+    for (var i = 0; i < bs.length; i++) {
+      if (validMonths.indexOf(i + 1) !== -1 && (i + 1) !== sel) {
+        bs[i].classList.add('correct');
+      }
+    }
+  } else if (isClose) {
     btn.classList.add('close');
     sfxHint();
     pts = Math.floor(it.d * 50) - (S.hSea ? 30 : 0);
     rt = 'partial';
     document.getElementById('img-sea').src = IM.normal;
     for (var i = 0; i < bs.length; i++) {
-      if (i + 1 === cor) bs[i].classList.add('show');
+      if (validMonths.indexOf(i + 1) !== -1) bs[i].classList.add('show');
     }
     document.getElementById('sp-sea').innerHTML = '<span class="dot">……</span>惜しいな。' + cor + '月の' + it.p + 'だ';
   } else {
@@ -1637,7 +1696,7 @@ function ansSea(btn, sel, it) {
     document.getElementById('img-sea').src = IM.wrong;
     document.getElementById('img-sea').className = 'small shake';
     for (var i = 0; i < bs.length; i++) {
-      if (i + 1 === cor) bs[i].classList.add('show');
+      if (validMonths.indexOf(i + 1) !== -1) bs[i].classList.add('show');
     }
     document.getElementById('sp-sea').innerHTML = pick([
       '<span class="dot">……</span>全然違う。' + cor + '月だ',
