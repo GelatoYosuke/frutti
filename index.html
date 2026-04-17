@@ -193,14 +193,42 @@ body{display:flex;justify-content:center;padding:0}
   width:180px;height:180px;
   background:rgba(60,50,38,0.03);
   border-radius:10px;
-  padding:8px;
+  padding:8px;overflow:hidden;
 }
 .hint-illust-wrap img{
   width:100%;height:100%;object-fit:contain;
-  display:block;
+  display:block;position:relative;z-index:1;
   /* 最初は何も見えない */
   clip-path:polygon(0 0, 0 0, 0 0, 0 0);
   animation:drawIllust 1.6s steps(1,end) forwards;
+}
+/* ヒント絵のキラ版：描画完了後に光沢が走る */
+.hint-illust-wrap.kira-illust::before{
+  content:'';position:absolute;top:0;left:-50%;
+  width:50%;height:100%;z-index:3;pointer-events:none;
+  background:linear-gradient(115deg,
+    transparent 20%,
+    rgba(255,240,180,0.3) 35%,
+    rgba(255,255,255,0.7) 45%,
+    rgba(180,220,255,0.4) 55%,
+    transparent 70%);
+  animation:shine 3.5s ease-in-out infinite;
+  animation-delay:1.8s;
+}
+.hint-illust-wrap.kira-illust::after{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  z-index:2;pointer-events:none;
+  background:linear-gradient(135deg,
+    rgba(255,192,203,0.08) 0%,
+    rgba(255,228,181,0.08) 20%,
+    rgba(208,240,192,0.08) 40%,
+    rgba(176,224,230,0.08) 60%,
+    rgba(216,191,216,0.08) 80%,
+    rgba(255,192,203,0.08) 100%);
+  background-size:200% 200%;
+  animation:holoShift 5s linear infinite;
+  mix-blend-mode:overlay;
+  opacity:0;animation-fill-mode:forwards;
 }
 /* 描画段階：左上から徐々に露出（5ステップでカクッと） */
 @keyframes drawIllust{
@@ -394,6 +422,150 @@ body{display:flex;justify-content:center;padding:0}
 .r-item:active{transform:scale(0.98)}
 .r-item::after{
   content:'›';margin-left:4px;color:var(--dim);font-size:18px;flex-shrink:0;
+}
+
+/* ===== キラ演出（難易度4＝希少品種） ===== */
+@keyframes rainbowShift{
+  0%{background-position:0% 50%}
+  100%{background-position:200% 50%}
+}
+@keyframes sparkle{
+  0%,100%{opacity:0.6;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.05)}
+}
+
+/* 図鑑の品種タグをキラに */
+.zukan-v.kira{
+  position:relative;
+  background:linear-gradient(90deg,
+    #ffd6e0 0%, #ffe4b5 15%, #fffacd 30%,
+    #d0f0c0 45%, #b0e0e6 60%, #d8bfd8 75%,
+    #ffd6e0 100%);
+  background-size:200% 100%;
+  animation:rainbowShift 4s linear infinite;
+  box-shadow:0 0 4px rgba(255,200,100,0.3);
+  font-weight:500;color:#5a3820;
+}
+.zukan-v.kira::before{
+  content:'✦';position:absolute;top:-2px;right:-2px;
+  font-size:10px;color:#d4a017;
+  animation:sparkle 1.5s ease-in-out infinite;
+}
+
+/* カレンダーの品種タグをキラに */
+.cal-item.kira{
+  background:linear-gradient(90deg,
+    #ffd6e0 0%, #ffe4b5 15%, #fffacd 30%,
+    #d0f0c0 45%, #b0e0e6 60%, #d8bfd8 75%,
+    #ffd6e0 100%) !important;
+  background-size:200% 100% !important;
+  animation:rainbowShift 4s linear infinite;
+  color:#5a3820 !important;
+  box-shadow:0 0 4px rgba(255,200,100,0.3);
+}
+
+/* 詳細モーダルの品種名をキラに */
+.modal-name.kira{
+  background:linear-gradient(90deg,
+    #d4a017 0%, #e8749c 25%, #8e63b8 50%,
+    #6bb7bf 75%, #d4a017 100%);
+  background-size:200% 100%;
+  animation:rainbowShift 3.5s linear infinite;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.modal-name.kira::after{
+  content:' ✦';
+  -webkit-background-clip:initial;background-clip:initial;
+  -webkit-text-fill-color:#d4a017;
+  color:#d4a017;
+  animation:sparkle 1.2s ease-in-out infinite;
+}
+
+/* 結果画面の品種行をキラに */
+.r-item.kira{
+  background:linear-gradient(90deg,
+    rgba(255,214,224,0.5) 0%, rgba(255,228,181,0.5) 25%,
+    rgba(208,240,192,0.5) 50%, rgba(216,191,216,0.5) 75%,
+    rgba(255,214,224,0.5) 100%);
+  background-size:200% 100%;
+  animation:rainbowShift 5s linear infinite;
+}
+.r-item.kira .r-name{color:#5a3820}
+
+/* タイトル画面統計のハイスコアもキラ（超高得点時用に予約） */
+.stat-val.kira{
+  background:linear-gradient(90deg,
+    #d4a017, #e8749c, #8e63b8, #6bb7bf, #d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 3s linear infinite;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* NEWバッジのキラ版 */
+.r-new.kira-new{
+  background:linear-gradient(90deg,#d4a017,#e8749c,#8e63b8,#6bb7bf,#d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 2s linear infinite;
+}
+
+/* キラ獲得メッセージ */
+.kira-msg{
+  display:inline-block;font-size:12px;font-weight:500;
+  background:linear-gradient(90deg,#d4a017,#e8749c,#8e63b8,#6bb7bf,#d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 2.5s linear infinite;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  letter-spacing:0.05em;
+}
+
+/* ===== キラ絵の光沢エフェクト（ポケカSR風） ===== */
+.modal-illust.kira-illust{
+  position:relative;overflow:hidden;border-radius:10px;
+  display:inline-block;
+}
+.modal-illust.kira-illust img{
+  display:block;position:relative;z-index:1;
+}
+/* 斜めに走る光の帯 */
+.modal-illust.kira-illust::before{
+  content:'';position:absolute;top:0;left:-50%;
+  width:50%;height:100%;z-index:2;pointer-events:none;
+  background:linear-gradient(115deg,
+    transparent 20%,
+    rgba(255,240,180,0.3) 35%,
+    rgba(255,255,255,0.7) 45%,
+    rgba(180,220,255,0.4) 55%,
+    transparent 70%);
+  animation:shine 3.5s ease-in-out infinite;
+}
+/* ほんのり虹色のホロっぽいオーバーレイ */
+.modal-illust.kira-illust::after{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  z-index:3;pointer-events:none;border-radius:10px;
+  background:linear-gradient(135deg,
+    rgba(255,192,203,0.08) 0%,
+    rgba(255,228,181,0.08) 20%,
+    rgba(208,240,192,0.08) 40%,
+    rgba(176,224,230,0.08) 60%,
+    rgba(216,191,216,0.08) 80%,
+    rgba(255,192,203,0.08) 100%);
+  background-size:200% 200%;
+  animation:holoShift 5s linear infinite;
+  mix-blend-mode:overlay;
+}
+
+@keyframes shine{
+  0%   {left:-50%}
+  60%  {left:110%}
+  100% {left:110%}
+}
+@keyframes holoShift{
+  0%{background-position:0% 0%}
+  100%{background-position:200% 200%}
 }
 /* 図鑑の品種もタップ可能に */
 .zukan-v:not(.locked){cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1124,7 +1296,8 @@ function showZukan() {
       var v = varieties[j];
       if (SAVE.collected[v.n]) {
         var tagHtml = renderTags(v.t);
-        list += '<div class="zukan-v" data-name="' + v.n + '">' + v.n + tagHtml + '</div>';
+        var kiraCls = isKira(v) ? ' kira' : '';
+        list += '<div class="zukan-v' + kiraCls + '" data-name="' + v.n + '">' + v.n + tagHtml + '</div>';
       } else {
         list += '<div class="zukan-v locked">？？？</div>';
       }
@@ -1238,7 +1411,8 @@ function showCalendar() {
       byMonth[m].forEach(function(d) {
         var iconUrl = getIllustUrl(d);
         var iconHtml = iconUrl ? '<img src="' + iconUrl + '" class="cat-icon-xs" alt="">' : '';
-        itemsHtml += '<div class="cal-item ' + catToClass(d.c) + '" data-name="' + d.n + '">'
+        var kiraCls = isKira(d) ? ' kira' : '';
+        itemsHtml += '<div class="cal-item ' + catToClass(d.c) + kiraCls + '" data-name="' + d.n + '">'
           + iconHtml + d.n + '</div>';
       });
     }
@@ -1275,6 +1449,9 @@ var MONTH_EMOJI = {
 };
 
 function getMonthEmoji(m) { return MONTH_EMOJI[m] || '🌿'; }
+
+// キラ判定：難易度4の品種
+function isKira(item) { return item && item.d === 4; }
 
 // 特徴タグをHTMLに変換
 var TAG_LABELS = {
@@ -1746,9 +1923,16 @@ function doHint(type) {
     var illustArea = document.getElementById('hint-illust-cat');
     var illustImg = document.getElementById('hint-img-cat');
     var brush = illustArea.querySelector('.hint-brush');
+    var illustWrap = illustArea.querySelector('.hint-illust-wrap');
 
     if (CAT_IMG && (CAT_IMG[it.v] || CAT_IMG[it.c])) {
       illustImg.src = CAT_IMG[it.v] || CAT_IMG[it.c];
+      // キラかどうか
+      if (isKira(it)) {
+        illustWrap.classList.add('kira-illust');
+      } else {
+        illustWrap.classList.remove('kira-illust');
+      }
       // 一旦アニメをリセット
       illustImg.style.animation = 'none';
       brush.style.animation = 'none';
@@ -1823,6 +2007,15 @@ function showResult() {
     cm += '<br><span style="color:var(--gold);font-size:12px">' + newCount + '品種が図鑑に追加された</span>';
   }
 
+  // キラ品種の新獲得をカウント
+  var kiraCount = 0;
+  for (var i = 0; i < S.res.length; i++) {
+    if (S.res[i].isNew && isKira(S.res[i].item)) kiraCount++;
+  }
+  if (kiraCount > 0) {
+    cm += '<br><span class="kira-msg">✦ 希少な品種に出会えた ×' + kiraCount + ' ✦</span>';
+  }
+
   document.getElementById('sp-res').innerHTML = cm;
   document.getElementById('img-res').src = pc >= 3 ? IM.correct : cc >= 3 ? IM.normal : IM.wrong;
   document.getElementById('img-res').className = pc >= 3 ? 'big' : '';
@@ -1835,7 +2028,7 @@ function showResult() {
   for (var i = 0; i < S.res.length; i++) {
     var r = S.res[i];
     var d = document.createElement('div');
-    d.className = 'r-item fi';
+    d.className = 'r-item fi' + (isKira(r.item) ? ' kira' : '');
     d.style.animationDelay = (i * 0.08) + 's';
 
     var ic, it;
@@ -1844,7 +2037,8 @@ function showResult() {
     else if (r.catOk) { ic = 'pt'; it = '△'; }
     else { ic = 'ng'; it = '×'; }
 
-    var newTag = r.isNew ? '<span class="r-new">NEW</span>' : '';
+    var newBadgeCls = 'r-new' + (isKira(r.item) ? ' kira-new' : '');
+    var newTag = r.isNew ? '<span class="' + newBadgeCls + '">NEW</span>' : '';
 
     d.innerHTML = '<div class="r-icon ' + ic + '">' + it + '</div>'
       + '<div class="r-info"><div class="r-name">' + r.item.n + newTag
@@ -1885,7 +2079,9 @@ function openVariety(name) {
   if (!item) return;
 
   document.getElementById('m-cat').textContent = item.c;
-  document.getElementById('m-name').textContent = item.n;
+  var nameEl = document.getElementById('m-name');
+  nameEl.textContent = item.n;
+  nameEl.className = 'modal-name' + (isKira(item) ? ' kira' : '');
   document.getElementById('m-reading').textContent = item.r;
 
   // 特徴タグ
@@ -1895,12 +2091,15 @@ function openVariety(name) {
   var illustDiv = document.getElementById('m-illust');
   var illustImg = document.getElementById('m-illust-img');
   var imgKey = item.v || item.c;  // バリアント優先、なければカテゴリ名
+  var kiraCls = isKira(item) ? ' kira-illust' : '';
   if (CAT_IMG && CAT_IMG[imgKey]) {
     illustImg.src = CAT_IMG[imgKey];
     illustDiv.style.display = 'block';
+    illustDiv.className = 'modal-illust' + kiraCls;
   } else if (CAT_IMG && CAT_IMG[item.c]) {
     illustImg.src = CAT_IMG[item.c];
     illustDiv.style.display = 'block';
+    illustDiv.className = 'modal-illust' + kiraCls;
   } else {
     illustDiv.style.display = 'none';
   }
