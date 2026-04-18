@@ -1441,8 +1441,23 @@ function renderTags(tags, cls) {
   return html;
 }
 
-// 品種のイラストURLを取得（バリアント優先→カテゴリ）
+// 品種個別画像（遅延ロード）
+var VARIETY_IMG = null;
+var varietyImgLoading = null;
+
+function loadVarietyImages() {
+  if (VARIETY_IMG) return Promise.resolve(VARIETY_IMG);
+  if (varietyImgLoading) return varietyImgLoading;
+  varietyImgLoading = fetch('variety_images.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { VARIETY_IMG = data; return data; })
+    .catch(function(e) { console.warn('variety images load failed', e); return {}; });
+  return varietyImgLoading;
+}
+
+// 品種のイラストURLを取得（品種個別 → バリアント → カテゴリ の優先順）
 function getIllustUrl(item) {
+  if (VARIETY_IMG && VARIETY_IMG[item.n]) return VARIETY_IMG[item.n];
   if (item.v && CAT_IMG[item.v]) return CAT_IMG[item.v];
   if (CAT_IMG[item.c]) return CAT_IMG[item.c];
   return '';
@@ -1463,6 +1478,8 @@ document.addEventListener('DOMContentLoaded', function() {
   updateTitleStats();
   createDots();
   updateBottomBar('title');
+  // 品種画像をバックグラウンドで先読み（遅延）
+  setTimeout(loadVarietyImages, 1500);
 });
 
 // タイトル画面のピクセルドットを生成
@@ -2049,6 +2066,19 @@ function openVariety(name) {
   }
   if (!item) return;
 
+  // 品種個別画像がまだ読み込まれていなければ、バックグラウンドで読み込む
+  // （カテゴリ絵が即表示され、個別画像が読み込めたら自動的に差し替わる）
+  if (!VARIETY_IMG) {
+    loadVarietyImages().then(function() {
+      // 同じモーダルがまだ表示中なら画像を更新
+      if (document.getElementById('modal').classList.contains('active')
+          && document.getElementById('m-name').textContent === item.n) {
+        var newUrl = getIllustUrl(item);
+        if (newUrl) document.getElementById('m-illust-img').src = newUrl;
+      }
+    });
+  }
+
   document.getElementById('m-cat').textContent = item.c;
   var nameEl = document.getElementById('m-name');
   nameEl.textContent = item.n;
@@ -2058,17 +2088,13 @@ function openVariety(name) {
   // 特徴タグ
   document.getElementById('m-tags').innerHTML = renderTags(item.t, 'modal-tags');
 
-  // カテゴリイラスト（バリアントがあれば優先）
+  // カテゴリイラスト（品種個別 > バリアント > カテゴリ の優先順）
   var illustDiv = document.getElementById('m-illust');
   var illustImg = document.getElementById('m-illust-img');
-  var imgKey = item.v || item.c;  // バリアント優先、なければカテゴリ名
   var kiraCls = isKira(item) ? ' kira-illust' : '';
-  if (CAT_IMG && CAT_IMG[imgKey]) {
-    illustImg.src = CAT_IMG[imgKey];
-    illustDiv.style.display = 'block';
-    illustDiv.className = 'modal-illust' + kiraCls;
-  } else if (CAT_IMG && CAT_IMG[item.c]) {
-    illustImg.src = CAT_IMG[item.c];
+  var url = getIllustUrl(item);
+  if (url) {
+    illustImg.src = url;
     illustDiv.style.display = 'block';
     illustDiv.className = 'modal-illust' + kiraCls;
   } else {
