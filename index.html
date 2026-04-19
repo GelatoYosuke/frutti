@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Frutti</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#b8860b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Frutti">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -1480,6 +1488,14 @@ document.addEventListener('DOMContentLoaded', function() {
   updateBottomBar('title');
   // 品種画像をバックグラウンドで先読み（遅延）
   setTimeout(loadVarietyImages, 1500);
+  // Service Worker 登録（PWA対応）
+  if ('serviceWorker' in navigator) {
+    setTimeout(function() {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function(reg) { console.log('SW registered'); })
+        .catch(function(err) { console.warn('SW registration failed', err); });
+    }, 3000);
+  }
 });
 
 // タイトル画面のピクセルドットを生成
