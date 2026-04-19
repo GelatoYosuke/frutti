@@ -505,6 +505,70 @@ body{display:flex;justify-content:center;padding:0}
   letter-spacing:0.05em;
 }
 
+/* 全コンプリートモーダル */
+.allcomp-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);
+  display:none;align-items:center;justify-content:center;
+  z-index:1000;opacity:0;
+  transition:opacity 0.4s ease;
+}
+.allcomp-overlay.active{display:flex;opacity:1}
+.allcomp-modal{
+  max-width:360px;width:90%;
+  background:var(--bg);
+  border:2px solid transparent;
+  background-clip:padding-box;
+  border-radius:16px;padding:28px 24px;
+  text-align:center;
+  position:relative;
+  box-shadow:0 4px 30px rgba(184,134,11,0.3);
+  animation:allcompPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.allcomp-modal::before{
+  content:'';position:absolute;inset:-2px;
+  background:linear-gradient(90deg,#d4a017,#e8749c,#8e63b8,#6bb7bf,#d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 3s linear infinite;
+  border-radius:16px;z-index:-1;
+}
+@keyframes allcompPop{
+  from{transform:scale(0.8);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+.allcomp-title{
+  font-family:var(--serif);font-size:20px;font-weight:700;
+  background:linear-gradient(90deg,#d4a017,#e8749c,#8e63b8,#6bb7bf,#d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 3s linear infinite;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  margin-bottom:10px;
+}
+.allcomp-sub{
+  font-size:13px;color:var(--soft);margin-bottom:16px;line-height:1.7;
+}
+.allcomp-num{
+  font-size:36px;font-weight:700;color:var(--gold);
+  font-family:var(--serif);
+  margin:8px 0;line-height:1;
+}
+.allcomp-nakanoko{
+  font-family:var(--serif);font-size:13px;
+  color:var(--text);
+  padding:10px 14px;background:rgba(60,50,38,0.05);
+  border-radius:8px;margin:14px 0;
+  line-height:1.7;
+}
+.allcomp-close{
+  background:var(--gold);color:white;border:none;
+  padding:10px 24px;font-size:13px;
+  border-radius:8px;cursor:pointer;
+  font-weight:500;letter-spacing:0.05em;
+  -webkit-tap-highlight-color:transparent;
+}
+.allcomp-close:active{opacity:0.7}
+
 /* ===== キラ絵の演出（虹色の枠） ===== */
 @keyframes rainbowBorder{
   0%{background-position:0% 50%}
@@ -792,6 +856,72 @@ body{display:flex;justify-content:center;padding:0}
   margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed rgba(60,50,38,0.12);
 }
 .zukan-cat-head-left{display:flex;align-items:center}
+
+/* カテゴリ進捗バー */
+.cat-progress-wrap{
+  margin-top:4px;padding-top:6px;
+  border-top:1px dashed rgba(60,50,38,0.08);
+  display:flex;align-items:center;gap:8px;
+}
+.cat-progress-bar{
+  flex:1;height:4px;background:rgba(60,50,38,0.08);
+  border-radius:2px;overflow:hidden;position:relative;
+}
+.cat-progress-fill{
+  height:100%;background:var(--gold);
+  border-radius:2px;
+  transition:width 0.6s ease;
+}
+.cat-progress-fill.complete{
+  background:linear-gradient(90deg,#d4a017,#e8749c,#8e63b8,#6bb7bf,#d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 3s linear infinite;
+}
+.cat-progress-pct{
+  font-size:10px;color:var(--dim);
+  font-variant-numeric:tabular-nums;
+  min-width:28px;text-align:right;
+}
+
+/* コンプリートバッジ */
+.cat-complete-badge{
+  display:inline-flex;align-items:center;
+  font-size:10px;padding:1px 6px;margin-left:6px;
+  background:linear-gradient(90deg,#d4a017,#e8749c,#8e63b8,#6bb7bf,#d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 3s linear infinite;
+  color:white;border-radius:4px;font-weight:500;
+  letter-spacing:0.05em;
+}
+
+/* 全体進捗ヘッダー */
+.zukan-overall{
+  background:rgba(184,134,11,0.06);
+  border:1px solid rgba(184,134,11,0.15);
+  border-radius:10px;padding:10px 12px;margin-bottom:14px;
+}
+.zukan-overall-top{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:6px;
+}
+.zukan-overall-label{font-size:11px;color:var(--soft);font-weight:500}
+.zukan-overall-val{font-size:14px;color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+.zukan-overall-bar{
+  height:6px;background:rgba(60,50,38,0.08);
+  border-radius:3px;overflow:hidden;
+}
+.zukan-overall-fill{
+  height:100%;background:var(--gold);
+  border-radius:3px;transition:width 0.6s ease;
+}
+.zukan-overall-fill.complete{
+  background:linear-gradient(90deg,#d4a017,#e8749c,#8e63b8,#6bb7bf,#d4a017);
+  background-size:200% 100%;
+  animation:rainbowShift 3s linear infinite;
+}
+.zukan-overall-stats{
+  font-size:10px;color:var(--dim);margin-top:4px;
+}
 </style>
 </head>
 <body>
@@ -957,6 +1087,20 @@ body{display:flex;justify-content:center;padding:0}
       <div class="bar-tab-icon">📅</div>
       <div class="bar-tab-label">カレンダー</div>
     </div>
+  </div>
+</div>
+
+<!-- 全コンプリートモーダル -->
+<div class="allcomp-overlay" id="allcomp-overlay" onclick="closeAllComplete(event)">
+  <div class="allcomp-modal" onclick="event.stopPropagation()">
+    <div class="allcomp-title">✦ 全品種コンプリート ✦</div>
+    <div class="allcomp-num" id="allcomp-num">187</div>
+    <div class="allcomp-sub">すべての品種を覚えた<br>日本の果物、一年分の旬</div>
+    <div class="allcomp-nakanoko">
+      <span class="dot" style="color:var(--dim)">……</span>よくぞここまで覚えたな。<br>
+      お前にはもう、何も教えることはない。
+    </div>
+    <button class="allcomp-close" onclick="closeAllComplete()">閉じる</button>
   </div>
 </div>
 
@@ -1223,7 +1367,10 @@ function updateTitleStats() {
   if (SAVE.plays > 0 || count > 0) {
     document.getElementById('stats-box').style.display = 'flex';
     document.getElementById('stat-hi').textContent = SAVE.hi;
-    document.getElementById('stat-collected').textContent = count;
+    var collectedEl = document.getElementById('stat-collected');
+    collectedEl.textContent = count;
+    // 全コンプ達成ならキラ表示
+    collectedEl.className = 'stat-val' + (count >= GD.length ? ' kira' : '');
     document.getElementById('stat-total').textContent = GD.length;
     document.getElementById('stat-plays').textContent = SAVE.plays;
     if (count > 0) {
@@ -1246,9 +1393,37 @@ function showZukan() {
 
   var allCats = getCats();
   var collectedTotal = Object.keys(SAVE.collected).length;
+  var isAllComplete = collectedTotal >= GD.length;
+  var overallPct = Math.round((collectedTotal / GD.length) * 100);
 
   document.getElementById('zukan-count').textContent =
     collectedTotal + ' / ' + GD.length + ' 品種';
+
+  // 全体進捗ヘッダー
+  if (collectedTotal > 0) {
+    var completedCats = 0;
+    for (var i = 0; i < allCats.length; i++) {
+      var cat = allCats[i];
+      var vs = GD.filter(function(d) { return d.c === cat; });
+      var cs = vs.filter(function(v) { return SAVE.collected[v.n]; }).length;
+      if (cs === vs.length) completedCats++;
+    }
+
+    var overallHtml = '<div class="zukan-overall">'
+      + '<div class="zukan-overall-top">'
+      + '<span class="zukan-overall-label">全体コンプリート率</span>'
+      + '<span class="zukan-overall-val">' + overallPct + '%</span>'
+      + '</div>'
+      + '<div class="zukan-overall-bar">'
+      + '<div class="zukan-overall-fill' + (isAllComplete ? ' complete' : '') + '" style="width:' + overallPct + '%"></div>'
+      + '</div>'
+      + '<div class="zukan-overall-stats">'
+      + completedCats + ' / ' + allCats.length + ' カテゴリ制覇'
+      + (isAllComplete ? ' ・ <span style="color:var(--gold);font-weight:500">✦ 全品種達成 ✦</span>' : '')
+      + '</div>'
+      + '</div>';
+    body.innerHTML = overallHtml;
+  }
 
   // カテゴリごとに集計
   for (var i = 0; i < allCats.length; i++) {
@@ -1258,19 +1433,31 @@ function showZukan() {
 
     if (collected.length === 0) continue;
 
+    var isComplete = collected.length === varieties.length;
+    var pct = Math.round((collected.length / varieties.length) * 100);
+
     var div = document.createElement('div');
     div.className = 'zukan-cat fi';
     div.style.animationDelay = (i * 0.03) + 's';
 
     // カテゴリアイコン付きヘッダー
     var catImgHtml = CAT_IMG[cat] ? '<img src="' + CAT_IMG[cat] + '" class="cat-icon-sm" alt="">' : '';
+    var completeBadge = isComplete ? '<span class="cat-complete-badge">✦ 完</span>' : '';
     var head = '<div class="zukan-cat-head">'
       + '<div class="zukan-cat-head-left">' + catImgHtml
-      + '<div class="zukan-cat-name">' + cat + '</div></div>'
+      + '<div class="zukan-cat-name">' + cat + completeBadge + '</div></div>'
       + '<div class="zukan-cat-count">' + collected.length + ' / ' + varieties.length + '</div>'
       + '</div>';
 
-    var list = '<div class="zukan-varieties">';
+    // 進捗バー
+    var progressHtml = '<div class="cat-progress-wrap">'
+      + '<div class="cat-progress-bar">'
+      + '<div class="cat-progress-fill' + (isComplete ? ' complete' : '') + '" style="width:' + pct + '%"></div>'
+      + '</div>'
+      + '<div class="cat-progress-pct">' + pct + '%</div>'
+      + '</div>';
+
+    var list = '<div class="zukan-varieties" style="margin-top:8px">';
     for (var j = 0; j < varieties.length; j++) {
       var v = varieties[j];
       if (SAVE.collected[v.n]) {
@@ -1283,7 +1470,7 @@ function showZukan() {
     }
     list += '</div>';
 
-    div.innerHTML = head + list;
+    div.innerHTML = head + progressHtml + list;
     body.appendChild(div);
   }
 
@@ -1983,6 +2170,19 @@ function doHint(type) {
   }
 }
 
+function showAllCompleteModal() {
+  document.getElementById('allcomp-num').textContent = GD.length;
+  document.getElementById('allcomp-overlay').classList.add('active');
+  // 派手な正解音を3回鳴らす
+  sfxCorrect();
+  setTimeout(sfxCorrect, 200);
+  setTimeout(sfxCorrect, 400);
+}
+function closeAllComplete(e) {
+  if (e && e.target && e.target.id !== 'allcomp-overlay' && !e.target.classList.contains('allcomp-close')) return;
+  document.getElementById('allcomp-overlay').classList.remove('active');
+}
+
 function showResult() {
   showS('result');
   sfxResult();
@@ -2021,6 +2221,36 @@ function showResult() {
   }
   if (kiraCount > 0) {
     cm += '<br><span class="kira-msg">✦ 希少な品種に出会えた ×' + kiraCount + ' ✦</span>';
+  }
+
+  // カテゴリコンプリート検知（このラウンドで新規獲得した品種のカテゴリが完成したか）
+  var newCompletedCats = [];
+  var checkedCats = {};
+  for (var i = 0; i < S.res.length; i++) {
+    var r = S.res[i];
+    if (!r.isNew) continue;
+    var cat = r.item.c;
+    if (checkedCats[cat]) continue;
+    checkedCats[cat] = true;
+    var vs = GD.filter(function(d) { return d.c === cat; });
+    var cs = vs.filter(function(v) { return SAVE.collected[v.n]; }).length;
+    if (cs === vs.length) newCompletedCats.push(cat);
+  }
+  for (var i = 0; i < newCompletedCats.length; i++) {
+    cm += '<br><span class="kira-msg">✦ 「' + newCompletedCats[i] + '」カテゴリ制覇 ✦</span>';
+  }
+
+  // 全品種コンプリート検知（ちょうど今回で達成したか）
+  var totalCollected = Object.keys(SAVE.collected).length;
+  if (totalCollected >= GD.length && newCount > 0) {
+    cm += '<br><span class="kira-msg" style="font-size:14px">✦✦ 全' + GD.length + '品種コンプリート達成 ✦✦</span>';
+    // 初回コンプリート記録
+    if (!SAVE.allComplete) {
+      SAVE.allComplete = new Date().toISOString().slice(0,10);
+      saveSave();
+      // 特別演出
+      setTimeout(showAllCompleteModal, 1500);
+    }
   }
 
   document.getElementById('sp-res').innerHTML = cm;
