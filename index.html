@@ -1604,7 +1604,211 @@ function showCalendar() {
   }
 }
 
-// ===== ゲームロジック =====
+// ===== なかの子のセリフ（文脈対応） =====
+// 各セリフにはオプションで条件をつけられる
+// - s: 季節 ('spring'|'summer'|'autumn'|'winter')
+// - t: 時間帯 ('morning'|'noon'|'evening'|'night')
+// - c: カテゴリ
+// - combo: 連続正解数（>=）
+// - first: 特定カテゴリ初獲得時
+// - kira: キラ品種
+// - month: 特定月
+// 条件が一つも設定されていなければ汎用（いつでも出る）
+
+var NAKANOKO_LINES = {
+  // 品種紹介（出題時）
+  intro: [
+    { text: '{n}' },
+    { text: '{n}。知ってるか' },
+    { text: '{n}、だ' },
+    { text: '{n}。さて' },
+    { text: 'これは{n}' },
+    { text: '{n}。どうだ' },
+    // 季節別
+    { text: '{n}。春の味だ', s: 'spring' },
+    { text: '{n}。夏の盛りだな', s: 'summer' },
+    { text: '{n}。秋の実りだ', s: 'autumn' },
+    { text: '{n}。冬の恵みだ', s: 'winter' },
+    // 時間帯
+    { text: '{n}。朝の光に似合う', t: 'morning' },
+    { text: '{n}。夜にふさわしい', t: 'night' },
+    // カテゴリ特定
+    { text: '{n}。桃には物語がある', c: '桃' },
+    { text: '{n}。甘く小さい宝石だ', c: '苺' },
+    { text: '{n}。柑橘の奥は深い', c: '柑橘類' },
+    { text: '{n}。ひと房に夏が詰まってる', c: 'ぶどう', s: 'summer' },
+    { text: '{n}。秋の赤い果実だ', c: 'りんご', s: 'autumn' }
+  ],
+
+  // カテゴリ正解
+  catCorrect: [
+    { text: '知ってたか' },
+    { text: 'ほう' },
+    { text: 'わかるじゃないか' },
+    { text: 'そうだ' },
+    { text: '見事だ' },
+    { text: 'その通り' },
+    // コンボ
+    { text: '……止まらないな', combo: 3 },
+    { text: '……覚えが早い', combo: 4 },
+    { text: '……お前、本物か', combo: 5 },
+    // キラ
+    { text: '……よくぞ見抜いた。希少な品種だぞ', kira: true },
+    { text: '……これがわかるとはな', kira: true },
+    // 季節
+    { text: 'この時期の味、忘れるなよ', s: 'spring', t: 'morning' },
+    { text: '夏の実りは短い。よく味わえ', s: 'summer' },
+    { text: '秋は、覚えることが多い季節だ', s: 'autumn' },
+    { text: '冬でも果物はある。見つけたな', s: 'winter' }
+  ],
+
+  // カテゴリ不正解
+  catWrong: [
+    { text: '違うぞ。{cor}だ' },
+    { text: '{cor}だ。覚えとけ' },
+    { text: 'まぁ、{cor}だな' },
+    { text: '{cor}だよ。次は頼む' },
+    { text: '……惜しかったか' }
+  ],
+
+  // 旬正解
+  seaCorrect: [
+    { text: 'わかってるじゃないか' },
+    { text: 'そうだ。{p}だ' },
+    { text: '正解。{cor}月の{p}' },
+    { text: '旬をよく知ってる' },
+    { text: '……季節の感覚があるな' },
+    // 時間帯
+    { text: '夜に季節の話は似合うな', t: 'night' },
+    { text: '朝から冴えてる', t: 'morning' },
+    // 連続正解
+    { text: '旬まで当てるとは', combo: 3 }
+  ],
+
+  // 旬不正解
+  seaWrong: [
+    { text: '全然違う。{cor}月だ' },
+    { text: '{cor}月の{p}だ。覚えとけ' },
+    { text: '……旬を外したか' },
+    { text: '{cor}月だよ。季節を感じろ' }
+  ],
+
+  // ヒント時
+  hint: [
+    { text: 'ちょっと待て。今描いてやる' },
+    { text: '待て。思い出しながら描く' },
+    { text: '絵で伝えてやろう' },
+    { text: '仕方ないな。描いてやる' },
+    { text: '……描くのは嫌いじゃない' },
+    // 夜
+    { text: '夜は絵を描くのに向いてる', t: 'night' },
+    // キラ
+    { text: '……特別に描いてやる', kira: true }
+  ],
+
+  // 結果画面（ポイント高い）
+  resultHigh: [
+    { text: 'なかなかやるじゃないか' },
+    { text: '……見直した' },
+    { text: '今日のお前は調子が良い' },
+    { text: '……本当に果物屋になれるぞ' },
+    // 季節
+    { text: 'この季節は得意そうだな', s: 'spring' },
+    { text: '夏の果物はよく知ってる', s: 'summer' },
+    { text: '秋の実り、覚えたな', s: 'autumn' }
+  ],
+
+  // 結果画面（カテゴリ4以上）
+  resultMid: [
+    { text: '悪くない。旬はもう少しだな' },
+    { text: 'カテゴリは覚えたか。次は旬だ' },
+    { text: 'まずまずだ' }
+  ],
+
+  // 結果画面（カテゴリ2-3）
+  resultLow: [
+    { text: 'まぁ、これから覚えればいい' },
+    { text: '少しずつでいい' },
+    { text: '……続けろ' }
+  ],
+
+  // 結果画面（ひどい）
+  resultBad: [
+    { text: '果物のこと、もっと知ってやれよ' },
+    { text: '……まだまだだな' },
+    { text: 'これから覚えればいい' }
+  ]
+};
+
+// 現在の季節を取得
+function currentSeason() {
+  var m = new Date().getMonth() + 1;
+  if ([3,4,5].indexOf(m) >= 0) return 'spring';
+  if ([6,7,8].indexOf(m) >= 0) return 'summer';
+  if ([9,10,11].indexOf(m) >= 0) return 'autumn';
+  return 'winter';
+}
+// 現在の時間帯
+function currentTimeOfDay() {
+  var h = new Date().getHours();
+  if (h >= 5 && h < 11) return 'morning';
+  if (h >= 11 && h < 16) return 'noon';
+  if (h >= 16 && h < 19) return 'evening';
+  return 'night';
+}
+
+// 文脈に合うセリフを選ぶ
+// vars: {n, cor, p} のような置換変数
+function pickLine(lineKey, ctx) {
+  ctx = ctx || {};
+  var lines = NAKANOKO_LINES[lineKey] || [];
+  if (lines.length === 0) return '';
+
+  var season = currentSeason();
+  var tod = currentTimeOfDay();
+  var combo = ctx.combo || 0;
+
+  // 条件にマッチするセリフを絞り込み、条件付きは優先度を上げる
+  var candidates = [];
+  var generics = [];
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    // 条件チェック
+    if (line.s && line.s !== season) continue;
+    if (line.t && line.t !== tod) continue;
+    if (line.c && line.c !== ctx.cat) continue;
+    if (line.combo && combo < line.combo) continue;
+    if (line.kira && !ctx.isKira) continue;
+    if (line.month && line.month !== new Date().getMonth() + 1) continue;
+
+    // 条件付きセリフか判定
+    var hasCondition = line.s || line.t || line.c || line.combo || line.kira || line.month;
+    if (hasCondition) {
+      candidates.push(line);
+    } else {
+      generics.push(line);
+    }
+  }
+
+  // 条件付きセリフがあれば 40% の確率でそちらを優先
+  var pool;
+  if (candidates.length > 0 && Math.random() < 0.4) {
+    pool = candidates;
+  } else {
+    pool = generics.length > 0 ? generics : candidates;
+  }
+  if (pool.length === 0) pool = lines;  // フォールバック
+
+  var chosen = pool[Math.floor(Math.random() * pool.length)];
+  var text = chosen.text;
+
+  // 変数置換
+  if (ctx.n) text = text.replace(/\{n\}/g, ctx.n);
+  if (ctx.cor !== undefined) text = text.replace(/\{cor\}/g, ctx.cor);
+  if (ctx.p) text = text.replace(/\{p\}/g, ctx.p);
+
+  return '<span class="dot">……</span>' + text;
+}
 
 // 特徴タグをHTMLに変換
 // 月ごとの季節絵文字
@@ -1815,17 +2019,12 @@ function startGame(mode) {
     if (sel.indexOf(sh[i]) === -1) sel.push(sh[i]);
   }
   S = {q: sel, cur: 0, sc: 0, res: [], hCat: false, hSea: false, _newThisRound: {},
-       mode: mode || 'normal', qCount: qCount, month: curMonth};
+       mode: mode || 'normal', qCount: qCount, month: curMonth, combo: 0};
   showCat();
 }
 
-function openSpeech(n) {
-  return pick([
-    '<span class="dot">……</span>' + n,
-    '<span class="dot">……</span>' + n + '。知ってるか',
-    '<span class="dot">……</span>' + n + '、だ',
-    '<span class="dot">……</span>' + n + '。さて'
-  ]);
+function openSpeech(it) {
+  return pickLine('intro', {n: it.n, cat: it.c, isKira: isKira(it)});
 }
 
 function updProg(id) {
@@ -1865,7 +2064,7 @@ function showCat() {
 
   document.getElementById('img-cat').src = IM.normal;
   document.getElementById('img-cat').className = '';
-  document.getElementById('sp-cat').innerHTML = openSpeech(it.n);
+  document.getElementById('sp-cat').innerHTML = openSpeech(it);
   document.getElementById('vn').textContent = it.n;
   document.getElementById('vr').textContent = it.r;
 
@@ -1921,12 +2120,10 @@ function ansCat(btn, sel, cor, it) {
     document.getElementById('img-cat').className = 'big pop';
     var pts = it.d * 100 - (S.hCat ? 30 : 0);
     S.sc += Math.max(pts, 0);
-    document.getElementById('sp-cat').innerHTML = pick([
-      '<span class="dot">……</span>知ってたか',
-      '<span class="dot">……</span>ほう',
-      '<span class="dot">……</span>わかるじゃないか',
-      '<span class="dot">……</span>そうだ'
-    ]);
+    S.combo = (S.combo || 0) + 1;
+    document.getElementById('sp-cat').innerHTML = pickLine('catCorrect', {
+      cat: it.c, combo: S.combo, isKira: isKira(it)
+    });
     setTimeout(function() { showSeason(it); }, 1200);
   } else {
     btn.classList.add('wrong');
@@ -1936,11 +2133,8 @@ function ansCat(btn, sel, cor, it) {
     for (var i = 0; i < bs.length; i++) {
       if (bs[i].textContent === cor) bs[i].classList.add('show');
     }
-    document.getElementById('sp-cat').innerHTML = pick([
-      '<span class="dot">……</span>違うぞ。' + cor + 'だ',
-      '<span class="dot">……</span>' + cor + 'だ。覚えとけ',
-      '<span class="dot">……</span>まぁ、' + cor + 'だな'
-    ]);
+    S.combo = 0; // コンボリセット
+    document.getElementById('sp-cat').innerHTML = pickLine('catWrong', {cor: cor});
     S.res.push({item: it, catOk: false, seaOk: null, pts: 0});
     var nb = document.createElement('button');
     nb.className = 'nxt-btn fi';
@@ -2040,11 +2234,9 @@ function ansSea(btn, sel, it) {
     rt = 'correct';
     document.getElementById('img-sea').src = IM.correct;
     document.getElementById('img-sea').className = 'big pop';
-    document.getElementById('sp-sea').innerHTML = pick([
-      '<span class="dot">……</span>わかってるじゃないか',
-      '<span class="dot">……</span>そうだ。' + it.p + 'だ',
-      '<span class="dot">……</span>正解。' + cor + '月の' + it.p
-    ]);
+    document.getElementById('sp-sea').innerHTML = pickLine('seaCorrect', {
+      cor: cor, p: it.p, combo: S.combo || 0, isKira: isKira(it)
+    });
     // 正解の月を全てハイライト
     for (var i = 0; i < bs.length; i++) {
       if (validMonths.indexOf(i + 1) !== -1 && (i + 1) !== sel) {
@@ -2069,10 +2261,7 @@ function ansSea(btn, sel, it) {
     for (var i = 0; i < bs.length; i++) {
       if (validMonths.indexOf(i + 1) !== -1) bs[i].classList.add('show');
     }
-    document.getElementById('sp-sea').innerHTML = pick([
-      '<span class="dot">……</span>全然違う。' + cor + '月だ',
-      '<span class="dot">……</span>' + cor + '月の' + it.p + 'だ。覚えとけ'
-    ]);
+    document.getElementById('sp-sea').innerHTML = pickLine('seaWrong', {cor: cor, p: it.p});
   }
 
   pts = Math.max(pts, 0);
@@ -2107,11 +2296,9 @@ function doHint(type) {
     b.textContent = 'ヒント済み';
 
     // まず「ちょっと待て」のセリフ
-    document.getElementById('sp-cat').innerHTML = pick([
-      '<span class="dot">……</span>ちょっと待て。今描いてやる',
-      '<span class="dot">……</span>待て。思い出しながら描く',
-      '<span class="dot">……</span>絵で伝えてやろう'
-    ]);
+    document.getElementById('sp-cat').innerHTML = pickLine('hint', {
+      cat: it.c, isKira: isKira(it)
+    });
 
     // 絵を用意してから描画アニメを起動
     var illustArea = document.getElementById('hint-illust-cat');
@@ -2202,10 +2389,10 @@ function showResult() {
   saveSave();
 
   var cm;
-  if (pc >= 4) cm = '<span class="dot">……</span>なかなかやるじゃないか';
-  else if (cc >= 4) cm = '<span class="dot">……</span>悪くない。旬はもう少しだな';
-  else if (cc >= 2) cm = '<span class="dot">……</span>まぁ、これから覚えればいい';
-  else cm = '<span class="dot">……</span>果物のこと、もっと知ってやれよ';
+  if (pc >= 4) cm = pickLine('resultHigh', {});
+  else if (cc >= 4) cm = pickLine('resultMid', {});
+  else if (cc >= 2) cm = pickLine('resultLow', {});
+  else cm = pickLine('resultBad', {});
 
   if (newHi && SAVE.plays > 1) cm += '<br><span style="color:var(--gold);font-size:12px">ハイスコア更新</span>';
 
