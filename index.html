@@ -2045,6 +2045,7 @@ function updProg(id) {
 }
 
 function showCat() {
+document.querySelectorAll('#s-cat .nxt-btn, #s-cat .s-info').forEach(function(el){ el.remove(); });
   showS('cat');
   sfxLidOpen();
   var it = S.q[S.cur];
@@ -2147,6 +2148,7 @@ function ansCat(btn, sel, cor, it) {
 
 function showSeason(it) {
   showS('season');
+  document.querySelectorAll('#s-season .nxt-btn, #s-season .s-info').forEach(function(el){ el.remove(); });
   sfxSeason();
   S.hSea = false;
   updProg('pr2');
